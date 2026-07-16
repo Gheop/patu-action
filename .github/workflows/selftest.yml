@@ -13,13 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Make a small fixture build
+      - name: Prepare a fixture build
         run: |
           set -euo pipefail
           mkdir -p dist
-          # A compressible gradient PNG (ImageMagick ships on the runner) that
-          # Patu will beat handily, plus an HTML file that references it.
-          convert -size 512x512 gradient:navy-orange dist/hero.png
+          # A committed, compressible gradient PNG that Patu beats handily
+          # (~99% smaller as AVIF), plus an HTML file that references it.
+          cp test/fixture/hero.png dist/hero.png
           printf '<!doctype html>\n<img src="hero.png" alt="hero">\n' > dist/index.html
           echo "before:"; ls -l dist
 
