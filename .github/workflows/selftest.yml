@@ -1,0 +1,40 @@
+name: Self-test
+
+# Proves the action works end-to-end against the real Patu API, and doubles as a
+# living usage example. Needs a PATU_KEY repository secret.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Make a small fixture build
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # A compressible gradient PNG (ImageMagick ships on the runner) that
+          # Patu will beat handily, plus an HTML file that references it.
+          convert -size 512x512 gradient:navy-orange dist/hero.png
+          printf '<!doctype html>\n<img src="hero.png" alt="hero">\n' > dist/index.html
+          echo "before:"; ls -l dist
+
+      - name: Optimize with Patu
+        uses: ./
+        with:
+          directory: dist
+          api-key: ${{ secrets.PATU_KEY }}
+
+      - name: Assert the image was upgraded to <picture>
+        run: |
+          set -euo pipefail
+          echo "after:"; ls -l dist
+          echo "--- dist/index.html ---"; cat dist/index.html
+          grep -q "<picture>" dist/index.html
+          test -f dist/hero.avif || test -f dist/hero.webp
+          echo "OK: Patu optimized the fixture and rewrote the reference."

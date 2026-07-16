@@ -1,0 +1,58 @@
+name: "Patu Optimize"
+description: "Optimize a build directory's images, SVG and fonts through the Patu API. Never bigger, never breaks your build."
+author: "Patu"
+branding:
+  icon: "feather"
+  color: "orange"
+
+inputs:
+  directory:
+    description: "Build output directory to optimize (e.g. dist)."
+    required: true
+  api-key:
+    description: "Patu API key. Store it as a secret and pass ${{ secrets.PATU_KEY }}."
+    required: true
+  mode:
+    description: "'optimize' (default: images/SVG/fonts written back to disk) or 'cdn' (serve assets from cdn.patu.dev)."
+    required: false
+    default: "optimize"
+  strict:
+    description: "Fail the build if any asset fails to optimize (default: keep the original, warn, continue)."
+    required: false
+    default: "false"
+  endpoint:
+    description: "Patu API endpoint (advanced: self-hosted or staging)."
+    required: false
+    default: ""
+  version:
+    description: "Version of @patu.dev/cli to run."
+    required: false
+    default: "latest"
+  node-version:
+    description: "Node.js version to set up for the run."
+    required: false
+    default: "20"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: ${{ inputs.node-version }}
+    # Inputs are passed via env (never interpolated into the shell) so the step
+    # is not vulnerable to script injection from a caller-supplied value.
+    - shell: bash
+      env:
+        PATU_KEY: ${{ inputs.api-key }}
+        PATU_DIR: ${{ inputs.directory }}
+        PATU_MODE: ${{ inputs.mode }}
+        PATU_STRICT: ${{ inputs.strict }}
+        PATU_ENDPOINT: ${{ inputs.endpoint }}
+        PATU_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        args=("$PATU_DIR")
+        if [ "$PATU_MODE" = "cdn" ]; then args+=(--cdn); fi
+        if [ "$PATU_STRICT" = "true" ]; then args+=(--strict); fi
+        if [ -n "$PATU_ENDPOINT" ]; then args+=(--endpoint "$PATU_ENDPOINT"); fi
+        npx --yes "@patu.dev/cli@$PATU_VERSION" "${args[@]}"
