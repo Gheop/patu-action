@@ -10,7 +10,7 @@ inputs:
     description: "Build output directory to optimize (e.g. dist)."
     required: true
   api-key:
-    description: "Patu API key. Store it as a secret and pass ${{ secrets.PATU_KEY }}."
+    description: "Patu API key. Store it as a repository secret and pass it in (e.g. from secrets.PATU_KEY)."
     required: true
   mode:
     description: "'optimize' (default: images/SVG/fonts written back to disk) or 'cdn' (serve assets from cdn.patu.dev)."
